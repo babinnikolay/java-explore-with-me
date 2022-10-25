@@ -1,2 +1,4 @@
 # java-explore-with-me
-Template repository for ExploreWithMe project.
+ExploreWithMe project.
+
+<br>https://github.com/babinpraktikum/java-explore-with-me/pull/1
