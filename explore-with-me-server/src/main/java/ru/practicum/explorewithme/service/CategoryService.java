@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 public class CategoryService {
     private final CategoryRepository categoryRepository;
     private final EventRepository eventRepository;
+    private final CategoryMapper categoryMapper;
 
     public ResponseEntity<Object> getCategories(Integer from, Integer size) throws NotFoundException {
         PageRequest page = PageRequest.of(from / size, size);
@@ -29,14 +30,14 @@ public class CategoryService {
             throw new NotFoundException("Categories not found");
         }
         List<CategoryDto> categoriesDto =
-                categories.stream().map(CategoryMapper::toCategoryDto).collect(Collectors.toList());
+                categories.stream().map(categoryMapper::toCategoryDto).collect(Collectors.toList());
         return ResponseEntity.ok(categoriesDto);
     }
 
     public ResponseEntity<Object> getCategory(Long catId) throws NotFoundException {
         Category category = categoryRepository.findById(catId).orElseThrow(() ->
                 new NotFoundException(String.format("Category catId=%s not found", catId)));
-        CategoryDto categoryDto = CategoryMapper.toCategoryDto(category);
+        CategoryDto categoryDto = categoryMapper.toCategoryDto(category);
         return ResponseEntity.ok(categoryDto);
     }
 
@@ -48,18 +49,18 @@ public class CategoryService {
                 && !existsCategory.getName().equals(categoryDto.getName())) {
             throw new BadRequestException(String.format("Category with name=%s already exists", categoryDto.getName()));
         }
-        Category newCategory = CategoryMapper.toCategory(categoryDto);
+        Category newCategory = categoryMapper.toCategory(categoryDto);
         Category savedCategory = categoryRepository.save(newCategory);
-        return ResponseEntity.ok(CategoryMapper.toCategoryDto(savedCategory));
+        return ResponseEntity.ok(categoryMapper.toCategoryDto(savedCategory));
     }
 
     public ResponseEntity<Object> createCategory(NewCategoryDto newCategoryDto) throws BadRequestException {
         if (categoryRepository.existsByNameIgnoreCase(newCategoryDto.getName())) {
             throw new BadRequestException(String.format("Category with name=%s already exists", newCategoryDto.getName()));
         }
-        Category category = CategoryMapper.toCategory(newCategoryDto);
+        Category category = categoryMapper.toCategory(newCategoryDto);
         Category savedCategory = categoryRepository.save(category);
-        return ResponseEntity.ok(CategoryMapper.toCategoryDto(savedCategory));
+        return ResponseEntity.ok(categoryMapper.toCategoryDto(savedCategory));
     }
 
     public ResponseEntity<Object> deleteCategory(Long catId) throws BadRequestException, NotFoundException {

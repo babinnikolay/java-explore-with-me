@@ -1,5 +1,6 @@
 package ru.practicum.explorewithme.model.mapper;
 
+import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
 import ru.practicum.explorewithme.model.User;
@@ -7,13 +8,10 @@ import ru.practicum.explorewithme.model.dto.UserDto;
 import ru.practicum.explorewithme.model.dto.UserShortDto;
 
 @Component
+@RequiredArgsConstructor
 public class UserMapper {
 
-    private static ModelMapper mapper;
-
-    public UserMapper(ModelMapper modelMapper) {
-        UserMapper.mapper = modelMapper;
-    }
+    private final ModelMapper mapper;
 
     public static User toUser(UserDto userRequest) {
         User user = new User();
@@ -30,7 +28,7 @@ public class UserMapper {
         return userDto;
     }
 
-    public static UserShortDto toUserShortDto(User initiator) {
+    public UserShortDto toUserShortDto(User initiator) {
         return mapper.map(initiator, UserShortDto.class);
     }
 }

@@ -21,6 +21,7 @@ public class RequestService {
     private final UserRepository userRepository;
     private final RequestRepository requestRepository;
     private final EventRepository eventRepository;
+    private final RequestMapper requestMapper;
 
     public ResponseEntity<Object> getRequests(Long userId) throws NotFoundException {
         if (!userRepository.existsById(userId)) {
@@ -29,7 +30,7 @@ public class RequestService {
         Collection<EventRequest> requests = requestRepository.findAllByRequesterId(userId);
 
         return ResponseEntity.ok(requests.stream()
-                .map(RequestMapper::toParticipationRequestDto).collect(Collectors.toList()));
+                .map(requestMapper::toParticipationRequestDto).collect(Collectors.toList()));
     }
 
     public ResponseEntity<Object> createRequest(Long userId, Long eventId) throws NotFoundException, BadRequestException {
@@ -67,7 +68,7 @@ public class RequestService {
                 .count() < event.getParticipantLimit()
         );
         EventRequest savedRequest = requestRepository.save(eventRequest);
-        return ResponseEntity.ok(RequestMapper.toParticipationRequestDto(savedRequest));
+        return ResponseEntity.ok(requestMapper.toParticipationRequestDto(savedRequest));
     }
 
     public ResponseEntity<Object> cancelRequest(Long userId, Long requestId) throws NotFoundException {
@@ -88,13 +89,13 @@ public class RequestService {
         }
         request.setState(EventRequestState.CANCELED);
         EventRequest savedRequest = requestRepository.save(request);
-        return ResponseEntity.ok(RequestMapper.toParticipationRequestDto(savedRequest));
+        return ResponseEntity.ok(requestMapper.toParticipationRequestDto(savedRequest));
     }
 
     public ResponseEntity<Object> getEventRequests(Long userId, Long eventId) {
         Collection<EventRequest> requests = requestRepository.findAllByRequesterIdAndEventId(userId, eventId);
         return ResponseEntity.ok(requests.stream()
-                .map(RequestMapper::toParticipationRequestDto).collect(Collectors.toList()));
+                .map(requestMapper::toParticipationRequestDto).collect(Collectors.toList()));
     }
 
     public ResponseEntity<Object> confirmRequest(Long userId, Long eventId, Long reqId)
@@ -135,7 +136,7 @@ public class RequestService {
         }
         eventRepository.save(event);
         EventRequest savedRequest = requestRepository.save(eventRequest);
-        return ResponseEntity.ok(RequestMapper.toParticipationRequestDto(savedRequest));
+        return ResponseEntity.ok(requestMapper.toParticipationRequestDto(savedRequest));
     }
 
     public ResponseEntity<Object> rejectRequest(Long userId, Long eventId, Long reqId)
@@ -158,6 +159,6 @@ public class RequestService {
             event.setAvailable(true);
         }
         EventRequest savedRequest = requestRepository.save(eventRequest);
-        return ResponseEntity.ok(RequestMapper.toParticipationRequestDto(savedRequest));
+        return ResponseEntity.ok(requestMapper.toParticipationRequestDto(savedRequest));
     }
 }

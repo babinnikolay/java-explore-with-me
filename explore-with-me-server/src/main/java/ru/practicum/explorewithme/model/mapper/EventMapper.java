@@ -1,5 +1,6 @@
 package ru.practicum.explorewithme.model.mapper;
 
+import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
 import ru.practicum.explorewithme.model.Event;
@@ -13,15 +14,14 @@ import ru.practicum.explorewithme.model.dto.NewEventDto;
 import java.time.LocalDateTime;
 
 @Component
+@RequiredArgsConstructor
 public class EventMapper {
 
-    private static ModelMapper mapper;
+    private final ModelMapper mapper;
+    private final CategoryMapper categoryMapper;
+    private final UserMapper userMapper;
 
-    public EventMapper(ModelMapper modelMapper) {
-        EventMapper.mapper = modelMapper;
-    }
-
-    public static Event toEvent(NewEventDto eventDto) {
+    public Event toEvent(NewEventDto eventDto) {
         Event event = mapper.map(eventDto, Event.class);
         event.setCreatedOn(LocalDateTime.now());
         event.setLocationLat(eventDto.getLocation().getLat());
@@ -30,10 +30,10 @@ public class EventMapper {
         return event;
     }
 
-    public static EventFullDto toEventFullDto(Event event) {
+    public EventFullDto toEventFullDto(Event event) {
         EventFullDto eventFullDto = mapper.map(event, EventFullDto.class);
-        eventFullDto.setCategory(CategoryMapper.toCategoryDto(event.getCategory()));
-        eventFullDto.setInitiator(UserMapper.toUserShortDto(event.getInitiator()));
+        eventFullDto.setCategory(categoryMapper.toCategoryDto(event.getCategory()));
+        eventFullDto.setInitiator(userMapper.toUserShortDto(event.getInitiator()));
         Location location = new Location();
         location.setLat(event.getLocationLat());
         location.setLon(event.getLocationLon());
@@ -43,10 +43,10 @@ public class EventMapper {
         return eventFullDto;
     }
 
-    public static EventShortDto toEventShortDto(Event event) {
+    public EventShortDto toEventShortDto(Event event) {
         EventShortDto eventShortDto = mapper.map(event, EventShortDto.class);
-        eventShortDto.setCategory(CategoryMapper.toCategoryDto(event.getCategory()));
-        eventShortDto.setInitiator(UserMapper.toUserShortDto(event.getInitiator()));
+        eventShortDto.setCategory(categoryMapper.toCategoryDto(event.getCategory()));
+        eventShortDto.setInitiator(userMapper.toUserShortDto(event.getInitiator()));
         eventShortDto.setConfirmedRequests((int) event.getRequests().stream()
                 .filter(r -> r.getState() == EventRequestState.CONFIRMED).count());
         return eventShortDto;

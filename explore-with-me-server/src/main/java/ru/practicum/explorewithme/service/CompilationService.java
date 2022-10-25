@@ -23,12 +23,13 @@ import java.util.stream.Collectors;
 public class CompilationService {
     private final CompilationRepository compilationRepository;
     private final EventRepository eventRepository;
+    private final CompilationMapper compilationMapper;
 
     public ResponseEntity<Object> getCompilations(Boolean pinned, Integer from, Integer size) {
         PageRequest page = PageRequest.of(from / size, size);
         Collection<Compilation> compilations = compilationRepository.findAll(pinned, page);
         List<CompilationDto> compilationsDto =
-                compilations.stream().map(CompilationMapper::toCompilationDto).collect(Collectors.toList());
+                compilations.stream().map(compilationMapper::toCompilationDto).collect(Collectors.toList());
         return ResponseEntity.ok(compilationsDto);
     }
 
@@ -36,15 +37,15 @@ public class CompilationService {
         Compilation compilation = compilationRepository.findById(compId).orElseThrow(() ->
                 new NotFoundException(String.format("Compilation %s not found", compId)));
 
-        return ResponseEntity.ok(CompilationMapper.toCompilationDto(compilation));
+        return ResponseEntity.ok(compilationMapper.toCompilationDto(compilation));
     }
 
     public ResponseEntity<Object> createCompilation(NewCompilationDto compilationDto) {
-        Compilation compilation = CompilationMapper.toCompilation(compilationDto);
+        Compilation compilation = compilationMapper.toCompilation(compilationDto);
         List<Event> events = eventRepository.findAllById(compilationDto.getEvents());
         compilation.setEvents(events);
         Compilation savedCompilation = compilationRepository.save(compilation);
-        return ResponseEntity.ok(CompilationMapper.toCompilationDto(savedCompilation));
+        return ResponseEntity.ok(compilationMapper.toCompilationDto(savedCompilation));
     }
 
     public ResponseEntity<Object> deleteCompilation(Long compId) throws NotFoundException {
@@ -68,7 +69,7 @@ public class CompilationService {
                                 String.format("Compilation %s does not have event %s", compId, eventId)));
         compilation.getEvents().remove(event);
         Compilation savedCompilation = compilationRepository.save(compilation);
-        return ResponseEntity.ok(CompilationMapper.toCompilationDto(savedCompilation));
+        return ResponseEntity.ok(compilationMapper.toCompilationDto(savedCompilation));
     }
 
     public ResponseEntity<Object> addEvent(Long compId, Long eventId) throws NotFoundException {
@@ -79,7 +80,7 @@ public class CompilationService {
 
         compilation.getEvents().add(event);
         Compilation savedCompilation = compilationRepository.save(compilation);
-        return ResponseEntity.ok(CompilationMapper.toCompilationDto(savedCompilation));
+        return ResponseEntity.ok(compilationMapper.toCompilationDto(savedCompilation));
     }
 
     public ResponseEntity<Object> unpinCompilation(Long compId) throws NotFoundException {
@@ -87,7 +88,7 @@ public class CompilationService {
                 new NotFoundException(String.format("Compilation %s not found", compId)));
         compilation.setPinned(false);
         Compilation savedCompilation = compilationRepository.save(compilation);
-        return ResponseEntity.ok(CompilationMapper.toCompilationDto(savedCompilation));
+        return ResponseEntity.ok(compilationMapper.toCompilationDto(savedCompilation));
     }
 
     public ResponseEntity<Object> pinCompilation(Long compId) throws NotFoundException {
@@ -95,6 +96,6 @@ public class CompilationService {
                 new NotFoundException(String.format("Compilation %s not found", compId)));
         compilation.setPinned(true);
         Compilation savedCompilation = compilationRepository.save(compilation);
-        return ResponseEntity.ok(CompilationMapper.toCompilationDto(savedCompilation));
+        return ResponseEntity.ok(compilationMapper.toCompilationDto(savedCompilation));
     }
 }
