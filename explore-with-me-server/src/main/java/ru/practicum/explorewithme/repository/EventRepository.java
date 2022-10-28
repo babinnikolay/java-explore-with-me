@@ -9,11 +9,11 @@ import ru.practicum.explorewithme.model.EventState;
 import ru.practicum.explorewithme.model.dto.FilterEventAdminRequest;
 import ru.practicum.explorewithme.model.dto.FilterEventOpenRequest;
 
-import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 public interface EventRepository extends JpaRepository<Event, Long> {
-    Collection<Event> findAllByInitiatorId(Long userId, PageRequest page);
+    List<Event> findAllByInitiatorId(Long userId, PageRequest page);
 
     Optional<Event> findByInitiatorIdAndId(Long userId, Long id);
 
@@ -27,7 +27,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             " and (:#{#filter.states} is null or e.state in :#{#filter.states})" +
             " and (cast( :#{#filter.rangeStart} as date) is null or e.eventDate >= :#{#filter.rangeStart})" +
             " and (cast(:#{#filter.rangeEnd} as date) is null or e.eventDate <= :#{#filter.rangeEnd})")
-    Collection<Event> findAllByFilter(@Param("filter") FilterEventAdminRequest filter, PageRequest page);
+    List<Event> findAllByFilter(@Param("filter") FilterEventAdminRequest filter, PageRequest page);
 
     @Query("select e from Event as e " +
             "where (:#{#filter.text} is null or (lower(e.annotation) LIKE lower(:#{#filter.text})) " +
@@ -38,5 +38,5 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             " and (cast(:#{#filter.rangeEnd} as date) is null or e.eventDate <= :#{#filter.rangeEnd})" +
             " and (e.state = :#{#filter.state})" +
             " and (:#{#filter.onlyAvailable} is null or e.available = :#{#filter.onlyAvailable}))")
-    Collection<Event> findAllByFilter(@Param("filter") FilterEventOpenRequest filter, PageRequest page);
+    List<Event> findAllByFilter(@Param("filter") FilterEventOpenRequest filter, PageRequest page);
 }

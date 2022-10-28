@@ -25,7 +25,7 @@ public class StatsController {
     @PostMapping("/hit")
     public ResponseEntity<Object> createHit(@RequestBody @Valid EndpointHit endpointHit) {
         log.info("Create hit {}", endpointHit);
-        return statsService.createHit(endpointHit);
+        return ResponseEntity.ok(statsService.createHit(endpointHit));
     }
 
     @GetMapping("/stats")
@@ -34,6 +34,6 @@ public class StatsController {
                                           @RequestParam(required = false) List<String> uris,
                                           @RequestParam(required = false, defaultValue = "false") Boolean unique) {
         log.info("Get hits start={}, end={}, uris={}, unique={}", start, end, uris, unique);
-        return statsService.getHits(start, end, uris, unique);
+        return ResponseEntity.ok(statsService.getHits(start, end, uris, unique));
     }
 }

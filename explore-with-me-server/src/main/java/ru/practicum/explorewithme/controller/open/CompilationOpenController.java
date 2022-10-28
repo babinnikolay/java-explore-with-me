@@ -27,12 +27,12 @@ public class CompilationOpenController {
                                                   @RequestParam(required = false, defaultValue = "0") Integer from,
                                                   @RequestParam(required = false, defaultValue = "10") Integer size) {
         log.info("Get compilations request pinned={}, from={}, size={}", pinned, from, size);
-        return compilationService.getCompilations(pinned, from, size);
+        return ResponseEntity.ok(compilationService.getCompilations(pinned, from, size));
     }
 
     @GetMapping("/{compId}")
     public ResponseEntity<Object> getCompilation(@NotNull @PathVariable Long compId) throws NotFoundException {
         log.info("Get compilation request compId={}", compId);
-        return compilationService.getCompilation(compId);
+        return ResponseEntity.ok(compilationService.getCompilation(compId));
     }
 }

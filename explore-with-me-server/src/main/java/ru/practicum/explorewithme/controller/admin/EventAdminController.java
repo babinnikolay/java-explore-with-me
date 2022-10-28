@@ -27,7 +27,7 @@ public class EventAdminController {
     @GetMapping
     public ResponseEntity<Object> getEvents(@Valid @ModelAttribute FilterEventAdminRequest filter) {
         log.info("Get admin events filter={}", filter);
-        return eventService.getEvents(filter);
+        return ResponseEntity.ok(eventService.getEvents(filter));
     }
 
     @PutMapping("/{eventId}")
@@ -35,20 +35,20 @@ public class EventAdminController {
                                               @RequestBody @Valid AdminUpdateEventRequest eventRequest)
             throws NotFoundException {
         log.info("Edit admin event eventId={}, eventRequest={}", eventId, eventRequest);
-        return eventService.updateEvent(eventId, eventRequest);
+        return ResponseEntity.ok(eventService.updateEvent(eventId, eventRequest));
     }
 
     @PatchMapping("/{eventId}/publish")
     public ResponseEntity<Object> publishEvent(@PathVariable @NotNull Long eventId)
             throws NotFoundException, BadRequestException {
         log.info("Publish admin event eventId={}", eventId);
-        return eventService.publishEvent(eventId);
+        return ResponseEntity.ok(eventService.publishEvent(eventId));
     }
 
     @PatchMapping("/{eventId}/reject")
     public ResponseEntity<Object> rejectEvent(@PathVariable @NotNull Long eventId)
             throws NotFoundException, BadRequestException {
         log.info("Reject admin event eventId={}", eventId);
-        return eventService.rejectEvent(eventId);
+        return ResponseEntity.ok(eventService.rejectEvent(eventId));
     }
 }

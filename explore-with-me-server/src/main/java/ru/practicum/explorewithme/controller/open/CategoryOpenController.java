@@ -25,12 +25,12 @@ public class CategoryOpenController {
                                                 @RequestParam(required = false, defaultValue = "10") Integer size)
             throws NotFoundException {
         log.info("Get categories request from={}, size={}", from, size);
-        return categoryService.getCategories(from, size);
+        return ResponseEntity.ok(categoryService.getCategories(from, size));
     }
 
     @GetMapping("/{catId}")
     public ResponseEntity<Object> getCategory(@PathVariable Long catId) throws NotFoundException {
         log.info("Get category request catId={}", catId);
-        return categoryService.getCategory(catId);
+        return ResponseEntity.ok(categoryService.getCategory(catId));
     }
 }

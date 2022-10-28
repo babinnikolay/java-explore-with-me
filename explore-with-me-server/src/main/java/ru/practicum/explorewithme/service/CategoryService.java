@@ -2,7 +2,6 @@ package ru.practicum.explorewithme.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import ru.practicum.explorewithme.exception.BadRequestException;
 import ru.practicum.explorewithme.exception.NotFoundException;
@@ -23,25 +22,22 @@ public class CategoryService {
     private final EventRepository eventRepository;
     private final CategoryMapper categoryMapper;
 
-    public ResponseEntity<Object> getCategories(Integer from, Integer size) throws NotFoundException {
+    public List<CategoryDto> getCategories(Integer from, Integer size) throws NotFoundException {
         PageRequest page = PageRequest.of(from / size, size);
         List<Category> categories = categoryRepository.findAll(page).getContent();
         if (categories.isEmpty()) {
             throw new NotFoundException("Categories not found");
         }
-        List<CategoryDto> categoriesDto =
-                categories.stream().map(categoryMapper::toCategoryDto).collect(Collectors.toList());
-        return ResponseEntity.ok(categoriesDto);
+        return categories.stream().map(categoryMapper::toCategoryDto).collect(Collectors.toList());
     }
 
-    public ResponseEntity<Object> getCategory(Long catId) throws NotFoundException {
+    public CategoryDto getCategory(Long catId) throws NotFoundException {
         Category category = categoryRepository.findById(catId).orElseThrow(() ->
                 new NotFoundException(String.format("Category catId=%s not found", catId)));
-        CategoryDto categoryDto = categoryMapper.toCategoryDto(category);
-        return ResponseEntity.ok(categoryDto);
+        return categoryMapper.toCategoryDto(category);
     }
 
-    public ResponseEntity<Object> updateCategory(CategoryDto categoryDto) throws BadRequestException, NotFoundException {
+    public CategoryDto updateCategory(CategoryDto categoryDto) throws BadRequestException, NotFoundException {
         Category existsCategory = categoryRepository.findById(categoryDto.getId()).orElseThrow(() ->
                 new NotFoundException(String.format("Category with id=%s not found", categoryDto.getId()))
         );
@@ -51,27 +47,25 @@ public class CategoryService {
         }
         Category newCategory = categoryMapper.toCategory(categoryDto);
         Category savedCategory = categoryRepository.save(newCategory);
-        return ResponseEntity.ok(categoryMapper.toCategoryDto(savedCategory));
+        return categoryMapper.toCategoryDto(savedCategory);
     }
 
-    public ResponseEntity<Object> createCategory(NewCategoryDto newCategoryDto) throws BadRequestException {
+    public CategoryDto createCategory(NewCategoryDto newCategoryDto) throws BadRequestException {
         if (categoryRepository.existsByNameIgnoreCase(newCategoryDto.getName())) {
             throw new BadRequestException(String.format("Category with name=%s already exists", newCategoryDto.getName()));
         }
         Category category = categoryMapper.toCategory(newCategoryDto);
         Category savedCategory = categoryRepository.save(category);
-        return ResponseEntity.ok(categoryMapper.toCategoryDto(savedCategory));
+        return categoryMapper.toCategoryDto(savedCategory);
     }
 
-    public ResponseEntity<Object> deleteCategory(Long catId) throws BadRequestException, NotFoundException {
+    public void deleteCategory(Long catId) throws BadRequestException, NotFoundException {
         if (!categoryRepository.existsById(catId)) {
             throw new NotFoundException(String.format("Category with id=%s not found", catId));
         }
         if (eventRepository.existsByCategoryId(catId)) {
             throw new BadRequestException(String.format("Exist events with category %s", catId));
         }
-
         categoryRepository.deleteById(catId);
-        return ResponseEntity.ok(null);
     }
 }

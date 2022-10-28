@@ -26,16 +26,17 @@ public class UserAdminController {
     public ResponseEntity<Object> getUsers(@RequestParam(required = false) List<Long> ids,
                                            @RequestParam(required = false, defaultValue = "0") Integer from,
                                            @RequestParam(required = false, defaultValue = "10") Integer size) {
-        return userService.getUsers(ids, from, size);
+        return ResponseEntity.ok(userService.getUsers(ids, from, size));
     }
 
     @PostMapping
     public ResponseEntity<Object> createUser(@Valid @RequestBody UserDto userDto) {
-        return userService.createUser(userDto);
+        return ResponseEntity.ok(userService.createUser(userDto));
     }
 
     @DeleteMapping("/{userId}")
     public ResponseEntity<Object> deleteUser(@NotNull @PathVariable Long userId) throws NotFoundException {
-        return userService.deleteUser(userId);
+        userService.deleteUser(userId);
+        return ResponseEntity.ok().build();
     }
 }

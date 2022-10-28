@@ -26,13 +26,13 @@ public class EventOpenController {
     public ResponseEntity<Object> getEvents(@Valid @ModelAttribute FilterEventOpenRequest filter,
                                             HttpServletRequest request) {
         log.info("Get events request filter={}, request={}", filter, request);
-        return eventService.getEvents(filter, request);
+        return ResponseEntity.ok(eventService.getEvents(filter, request));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Object> getEvent(@NotNull @PathVariable Long id,
                                            HttpServletRequest request) throws NotFoundException {
         log.info("Get event request id={}, request={}", id, request);
-        return eventService.getEvent(id, request);
+        return ResponseEntity.ok(eventService.getEvent(id, request));
     }
 }

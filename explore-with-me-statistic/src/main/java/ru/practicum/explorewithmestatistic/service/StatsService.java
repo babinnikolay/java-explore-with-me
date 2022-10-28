@@ -3,7 +3,6 @@ package ru.practicum.explorewithmestatistic.service;
 import lombok.RequiredArgsConstructor;
 import ru.practicum.explorewithmestatistic.model.dto.EndpointHit;
 import ru.practicum.explorewithmestatistic.model.dto.ViewStats;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import ru.practicum.explorewithmestatistic.repository.StatsRepository;
 
@@ -16,16 +15,14 @@ import java.util.List;
 public class StatsService {
     private final StatsRepository statsRepository;
 
-    public ResponseEntity<Object> createHit(EndpointHit endpointHit) {
-        EndpointHit savedHit = statsRepository.save(endpointHit);
-        return ResponseEntity.ok(savedHit);
+    public EndpointHit createHit(EndpointHit endpointHit) {
+        return statsRepository.save(endpointHit);
     }
 
-    public ResponseEntity<Object> getHits(LocalDateTime start,
-                                          LocalDateTime end,
-                                          List<String> uris,
-                                          Boolean unique) {
-        Collection<ViewStats> stats = statsRepository.findAllByStartEndTime(start, end, uris, unique);
-        return ResponseEntity.ok(stats);
+    public Collection<ViewStats> getHits(LocalDateTime start,
+                                         LocalDateTime end,
+                                         List<String> uris,
+                                         Boolean unique) {
+        return statsRepository.findAllByStartEndTime(start, end, uris, unique);
     }
 }

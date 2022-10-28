@@ -25,13 +25,14 @@ public class CompilationAdminController {
     @PostMapping
     public ResponseEntity<Object> createCompilation(@RequestBody @Valid NewCompilationDto compilationDto) {
         log.info("New compilation {}", compilationDto);
-        return compilationService.createCompilation(compilationDto);
+        return ResponseEntity.ok(compilationService.createCompilation(compilationDto));
     }
 
     @DeleteMapping("/{compId}")
-    public ResponseEntity<Object> deleteCompilation(@PathVariable @NotNull Long compId) throws NotFoundException {
+    public ResponseEntity<Object> delResponseEntityeteCompilation(@PathVariable @NotNull Long compId) throws NotFoundException {
         log.info("Delete compilation compId={}", compId);
-        return compilationService.deleteCompilation(compId);
+        compilationService.deleteCompilation(compId);
+        return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{compId}/events/{eventId}")
@@ -39,25 +40,25 @@ public class CompilationAdminController {
                                               @PathVariable @NotNull Long eventId)
             throws BadRequestException, NotFoundException {
         log.info("Delete event {} from compilation {}", eventId, compId);
-        return compilationService.deleteEvent(compId, eventId);
+        return ResponseEntity.ok(compilationService.deleteEvent(compId, eventId));
     }
 
     @PatchMapping("/{compId}/events/{eventId}")
     public ResponseEntity<Object> addEvent(@PathVariable @NotNull Long compId,
                                            @PathVariable @NotNull Long eventId) throws NotFoundException {
         log.info("Add event {} to compilation {}", eventId, compId);
-        return compilationService.addEvent(compId, eventId);
+        return ResponseEntity.ok(compilationService.addEvent(compId, eventId));
     }
 
     @DeleteMapping("/{compId}/pin")
     public ResponseEntity<Object> unpinCompilation(@PathVariable @NotNull Long compId) throws NotFoundException {
         log.info("Unpin compilation {}", compId);
-        return compilationService.unpinCompilation(compId);
+        return ResponseEntity.ok(compilationService.changePinState(compId, false));
     }
 
     @PatchMapping("/{compId}/pin")
     public ResponseEntity<Object> pinCompilation(@PathVariable @NotNull Long compId) throws NotFoundException {
         log.info("Pin compilation {}", compId);
-        return compilationService.pinCompilation(compId);
+        return ResponseEntity.ok(compilationService.changePinState(compId, true));
     }
 }

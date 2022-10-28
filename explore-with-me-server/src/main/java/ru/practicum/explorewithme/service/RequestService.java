@@ -1,18 +1,18 @@
 package ru.practicum.explorewithme.service;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import ru.practicum.explorewithme.exception.BadRequestException;
 import ru.practicum.explorewithme.exception.NotFoundException;
 import ru.practicum.explorewithme.model.*;
+import ru.practicum.explorewithme.model.dto.ParticipationRequestDto;
 import ru.practicum.explorewithme.model.mapper.RequestMapper;
 import ru.practicum.explorewithme.repository.EventRepository;
 import ru.practicum.explorewithme.repository.RequestRepository;
 import ru.practicum.explorewithme.repository.UserRepository;
 
 import java.time.LocalDateTime;
-import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,21 +23,21 @@ public class RequestService {
     private final EventRepository eventRepository;
     private final RequestMapper requestMapper;
 
-    public ResponseEntity<Object> getRequests(Long userId) throws NotFoundException {
+    public List<ParticipationRequestDto> getRequests(Long userId) throws NotFoundException {
         if (!userRepository.existsById(userId)) {
             throw new NotFoundException(String.format("User with id %s not found", userId));
         }
-        Collection<EventRequest> requests = requestRepository.findAllByRequesterId(userId);
+        List<EventRequest> requests = requestRepository.findAllByRequesterId(userId);
 
-        return ResponseEntity.ok(requests.stream()
-                .map(requestMapper::toParticipationRequestDto).collect(Collectors.toList()));
+        return requests.stream()
+                .map(requestMapper::toParticipationRequestDto).collect(Collectors.toList());
     }
 
-    public ResponseEntity<Object> createRequest(Long userId, Long eventId) throws NotFoundException, BadRequestException {
+    public ParticipationRequestDto createRequest(Long userId, Long eventId) throws NotFoundException, BadRequestException {
         User user = userRepository.findById(userId).orElseThrow(() ->
                 new NotFoundException(String.format("User with id %s not found", userId)));
         if (requestRepository.existsByRequesterIdAndEventId(userId, eventId)) {
-            throw new BadRequestException(String.format("Event request for userId=%s and eventId=% already exist",
+            throw new BadRequestException(String.format("Event request for userId=%s and eventId=%s already exist",
                     userId, eventId));
         }
         Event event = eventRepository.findById(eventId).orElseThrow(() ->
@@ -59,7 +59,7 @@ public class RequestService {
         eventRequest.setEvent(event);
         eventRequest.setCreated(LocalDateTime.now());
         if (!event.getRequestModeration()) {
-            event.setState(EventState.PUBLISHED);
+            eventRequest.setState(EventRequestState.CONFIRMED);
         } else {
             eventRequest.setState(EventRequestState.PENDING);
         }
@@ -67,11 +67,12 @@ public class RequestService {
                 .filter(r -> r.getState() == EventRequestState.CONFIRMED)
                 .count() < event.getParticipantLimit()
         );
+        eventRepository.save(event);
         EventRequest savedRequest = requestRepository.save(eventRequest);
-        return ResponseEntity.ok(requestMapper.toParticipationRequestDto(savedRequest));
+        return requestMapper.toParticipationRequestDto(savedRequest);
     }
 
-    public ResponseEntity<Object> cancelRequest(Long userId, Long requestId) throws NotFoundException {
+    public ParticipationRequestDto cancelRequest(Long userId, Long requestId) throws NotFoundException {
         if (!userRepository.existsById(userId)) {
             throw new NotFoundException(String.format("User with id %s not found", userId));
         }
@@ -89,16 +90,16 @@ public class RequestService {
         }
         request.setState(EventRequestState.CANCELED);
         EventRequest savedRequest = requestRepository.save(request);
-        return ResponseEntity.ok(requestMapper.toParticipationRequestDto(savedRequest));
+        return requestMapper.toParticipationRequestDto(savedRequest);
     }
 
-    public ResponseEntity<Object> getEventRequests(Long userId, Long eventId) {
-        Collection<EventRequest> requests = requestRepository.findAllByRequesterIdAndEventId(userId, eventId);
-        return ResponseEntity.ok(requests.stream()
-                .map(requestMapper::toParticipationRequestDto).collect(Collectors.toList()));
+    public List<ParticipationRequestDto> getEventRequests(Long userId, Long eventId) {
+        List<EventRequest> requests = requestRepository.findAllByRequesterIdAndEventId(userId, eventId);
+        return requests.stream()
+                .map(requestMapper::toParticipationRequestDto).collect(Collectors.toList());
     }
 
-    public ResponseEntity<Object> confirmRequest(Long userId, Long eventId, Long reqId)
+    public ParticipationRequestDto confirmRequest(Long userId, Long eventId, Long reqId)
             throws NotFoundException, BadRequestException {
         if (!userRepository.existsById(userId)) {
             throw new NotFoundException(String.format("User %s not found", userId));
@@ -136,10 +137,10 @@ public class RequestService {
         }
         eventRepository.save(event);
         EventRequest savedRequest = requestRepository.save(eventRequest);
-        return ResponseEntity.ok(requestMapper.toParticipationRequestDto(savedRequest));
+        return requestMapper.toParticipationRequestDto(savedRequest);
     }
 
-    public ResponseEntity<Object> rejectRequest(Long userId, Long eventId, Long reqId)
+    public ParticipationRequestDto rejectRequest(Long userId, Long eventId, Long reqId)
             throws NotFoundException, BadRequestException {
         if (!userRepository.existsById(userId)) {
             throw new NotFoundException(String.format("User %s not found", userId));
@@ -159,6 +160,6 @@ public class RequestService {
             event.setAvailable(true);
         }
         EventRequest savedRequest = requestRepository.save(eventRequest);
-        return ResponseEntity.ok(requestMapper.toParticipationRequestDto(savedRequest));
+        return requestMapper.toParticipationRequestDto(savedRequest);
     }
 }

@@ -26,18 +26,22 @@ public class CategoryAdminController {
     @PatchMapping
     public ResponseEntity<Object> updateCategory(@Valid @RequestBody CategoryDto categoryDto)
             throws BadRequestException, NotFoundException {
-        return categoryService.updateCategory(categoryDto);
+        log.info("Update category {}", categoryDto);
+        return ResponseEntity.ok(categoryService.updateCategory(categoryDto));
     }
 
     @PostMapping
     public ResponseEntity<Object> createCategory(@Valid @RequestBody NewCategoryDto newCategoryDto)
             throws BadRequestException {
-        return categoryService.createCategory(newCategoryDto);
+        log.info("Create category {}", newCategoryDto);
+        return ResponseEntity.ok(categoryService.createCategory(newCategoryDto));
     }
 
     @DeleteMapping("/{catId}")
     public ResponseEntity<Object> deleteCategory(@NotNull @PathVariable Long catId)
             throws BadRequestException, NotFoundException {
-        return categoryService.deleteCategory(catId);
+        log.info("Delete category {}", catId);
+        categoryService.deleteCategory(catId);
+        return ResponseEntity.ok().build();
     }
 }

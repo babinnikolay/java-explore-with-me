@@ -3,7 +3,6 @@ package ru.practicum.explorewithme.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import ru.practicum.explorewithme.exception.BadRequestException;
 import ru.practicum.explorewithme.exception.NotFoundException;
@@ -31,7 +30,7 @@ public class EventService {
     private final StatisticClient statisticClient;
     private final EventMapper eventMapper;
 
-    public ResponseEntity<Object> getEvents(FilterEventOpenRequest filter, HttpServletRequest request) {
+    public List<EventShortDto> getEvents(FilterEventOpenRequest filter, HttpServletRequest request) {
         String sortField = "id";
         if (filter.getSort() == SortTypes.EVENT_DATE) {
             sortField = "eventDate";
@@ -43,45 +42,41 @@ public class EventService {
         if (filter.getText() != null) {
             filter.setText(("%" + filter.getText() + "%"));
         }
-        Collection<Event> events = eventRepository.findAllByFilter(filter, page);
+        List<Event> events = eventRepository.findAllByFilter(filter, page);
         events.forEach(e -> e.setViews(e.getViews() + 1));
         eventRepository.saveAll(events);
 
         saveStatisticHit(request);
 
-        List<EventShortDto> eventShortDto =
-                events.stream().map(eventMapper::toEventShortDto).collect(Collectors.toList());
-        return ResponseEntity.ok(eventShortDto);
+        return events.stream().map(eventMapper::toEventShortDto).collect(Collectors.toList());
     }
 
-    public ResponseEntity<Object> getEvents(FilterEventAdminRequest filter) {
+    public List<EventFullDto> getEvents(FilterEventAdminRequest filter) {
         PageRequest page = PageRequest.of(filter.getFrom() / filter.getSize(), filter.getSize());
-        Collection<Event> events = eventRepository.findAllByFilter(filter, page);
+        List<Event> events = eventRepository.findAllByFilter(filter, page);
 
-        List<EventFullDto> eventsFullDto =
-                events.stream().map(eventMapper::toEventFullDto).collect(Collectors.toList());
-        return ResponseEntity.ok(eventsFullDto);
+        return events.stream().map(eventMapper::toEventFullDto).collect(Collectors.toList());
     }
 
-    public ResponseEntity<Object> getEvent(Long id, HttpServletRequest request) throws NotFoundException {
+    public EventFullDto getEvent(Long id, HttpServletRequest request) throws NotFoundException {
         Event event = eventRepository.findByIdAndState(id, EventState.PUBLISHED).orElseThrow(() ->
                 new NotFoundException(String.format("Event with id %s not found", id)));
         event.setViews(event.getViews() + 1);
         eventRepository.save(event);
         saveStatisticHit(request);
-        return ResponseEntity.ok(eventMapper.toEventFullDto(event));
+        return eventMapper.toEventFullDto(event);
     }
 
-    public ResponseEntity<Object> getEventByInitiator(Long userId, Long eventId) throws NotFoundException {
+    public EventFullDto getEventByInitiator(Long userId, Long eventId) throws NotFoundException {
         if (!userRepository.existsById(userId)) {
             throw new NotFoundException(String.format("User with if %s not found", userId));
         }
         Event event = eventRepository.findByInitiatorIdAndId(userId, eventId).orElseThrow(() ->
                 new NotFoundException(String.format("Event with id %s not found", eventId)));
-        return ResponseEntity.ok(eventMapper.toEventFullDto(event));
+        return eventMapper.toEventFullDto(event);
     }
 
-    public ResponseEntity<Object> createEvent(Long userId, NewEventDto newEventDto) throws NotFoundException {
+    public EventFullDto createEvent(Long userId, NewEventDto newEventDto) throws NotFoundException {
         User user = userRepository.findById(userId).orElseThrow(() ->
                 new NotFoundException(String.format("User with if %s not found", userId)));
 
@@ -93,21 +88,19 @@ public class EventService {
         event.setCategory(category);
         event.setAvailable(true);
         Event newEvent = eventRepository.save(event);
-        return ResponseEntity.ok(eventMapper.toEventFullDto(newEvent));
+        return eventMapper.toEventFullDto(newEvent);
     }
 
-    public ResponseEntity<Object> getEvents(Long userId, Integer from, Integer size) throws NotFoundException {
+    public List<EventShortDto> getEvents(Long userId, Integer from, Integer size) throws NotFoundException {
         if (!userRepository.existsById(userId)) {
             throw new NotFoundException(String.format("User with if %s not found", userId));
         }
         PageRequest page = PageRequest.of(from / size, size);
         Collection<Event> events = eventRepository.findAllByInitiatorId(userId, page);
-        List<EventShortDto> shorts =
-                events.stream().map(eventMapper::toEventShortDto).collect(Collectors.toList());
-        return ResponseEntity.ok(shorts);
+        return events.stream().map(eventMapper::toEventShortDto).collect(Collectors.toList());
     }
 
-    public ResponseEntity<Object> updateEvent(Long userId, UpdateEventRequest updateEventRequest)
+    public EventFullDto updateEvent(Long userId, UpdateEventRequest updateEventRequest)
             throws NotFoundException, BadRequestException {
         if (!userRepository.existsById(userId)) {
             throw new NotFoundException(String.format("User with id %s not found", userId));
@@ -145,11 +138,10 @@ public class EventService {
             event.setTitle(updateEventRequest.getTitle());
         }
         Event savedEvent = eventRepository.save(event);
-        EventFullDto eventFullDto = eventMapper.toEventFullDto(savedEvent);
-        return ResponseEntity.ok(eventFullDto);
+        return eventMapper.toEventFullDto(savedEvent);
     }
 
-    public ResponseEntity<Object> updateEvent(Long eventId, AdminUpdateEventRequest eventRequest) throws NotFoundException {
+    public EventFullDto updateEvent(Long eventId, AdminUpdateEventRequest eventRequest) throws NotFoundException {
         Event event = eventRepository.findById(eventId).orElseThrow(() ->
                 new NotFoundException(String.format("Event with id %s not found", eventId)));
         event.setAnnotation(eventRequest.getAnnotation());
@@ -165,14 +157,17 @@ public class EventService {
             event.setLocationLon(null);
         }
         event.setPaid(eventRequest.getPaid());
+        if (event.getParticipantLimit() < eventRequest.getParticipantLimit()) {
+            event.setAvailable(true);
+        }
         event.setParticipantLimit(eventRequest.getParticipantLimit());
         event.setRequestModeration(eventRequest.getRequestModeration());
         event.setTitle(eventRequest.getTitle());
         Event savedEvent = eventRepository.save(event);
-        return ResponseEntity.ok(eventMapper.toEventFullDto(savedEvent));
+        return eventMapper.toEventFullDto(savedEvent);
     }
 
-    public ResponseEntity<Object> cancelEvent(Long userId, Long eventId) throws NotFoundException, BadRequestException {
+    public EventFullDto cancelEvent(Long userId, Long eventId) throws NotFoundException, BadRequestException {
         Event event = eventRepository.findByInitiatorIdAndId(userId, eventId).orElseThrow(() ->
                 new NotFoundException(String.format("Event %s with initiator %s not found", eventId, userId)));
         if (event.getState() != EventState.PENDING) {
@@ -180,10 +175,10 @@ public class EventService {
         }
         event.setState(EventState.CANCELED);
         Event savedEvent = eventRepository.save(event);
-        return ResponseEntity.ok(eventMapper.toEventFullDto(savedEvent));
+        return eventMapper.toEventFullDto(savedEvent);
     }
 
-    public ResponseEntity<Object> publishEvent(Long eventId) throws NotFoundException, BadRequestException {
+    public EventFullDto publishEvent(Long eventId) throws NotFoundException, BadRequestException {
         Event event = eventRepository.findById(eventId).orElseThrow(() ->
                 new NotFoundException(String.format("Event with id %s not found", eventId)));
         LocalDateTime now = LocalDateTime.now();
@@ -193,10 +188,10 @@ public class EventService {
         event.setPublishedOn(now);
         event.setState(EventState.PUBLISHED);
         Event savedEvent = eventRepository.save(event);
-        return ResponseEntity.ok(eventMapper.toEventFullDto(savedEvent));
+        return eventMapper.toEventFullDto(savedEvent);
     }
 
-    public ResponseEntity<Object> rejectEvent(Long eventId) throws NotFoundException, BadRequestException {
+    public EventFullDto rejectEvent(Long eventId) throws NotFoundException, BadRequestException {
         Event event = eventRepository.findById(eventId).orElseThrow(() ->
                 new NotFoundException(String.format("Event with id %s not found", eventId)));
         if (event.getState() == EventState.PUBLISHED) {
@@ -204,7 +199,7 @@ public class EventService {
         }
         event.setState(EventState.CANCELED);
         Event savedEvent = eventRepository.save(event);
-        return ResponseEntity.ok(eventMapper.toEventFullDto(savedEvent));
+        return eventMapper.toEventFullDto(savedEvent);
     }
 
     private void saveStatisticHit(HttpServletRequest request) {
