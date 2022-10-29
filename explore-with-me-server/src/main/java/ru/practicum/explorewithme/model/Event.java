@@ -42,7 +42,8 @@ public class Event {
     private EventState state;
     private String title;
     private boolean available;
-    private long views;
+    @Transient
+    private int views;
     @OneToMany
     @JoinColumn(name = "event_request_id")
     private List<EventRequest> requests = new ArrayList<>();

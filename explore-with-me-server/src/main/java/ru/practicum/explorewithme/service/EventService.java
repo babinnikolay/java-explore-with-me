@@ -17,6 +17,7 @@ import ru.practicum.explorewithme.statisticclient.StatisticClient;
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class EventService {
+    private static final String SERVICE_NAME = "emw-server";
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
@@ -43,9 +45,19 @@ public class EventService {
             filter.setText(("%" + filter.getText() + "%"));
         }
         List<Event> events = eventRepository.findAllByFilter(filter, page);
-        events.forEach(e -> e.setViews(e.getViews() + 1));
-        eventRepository.saveAll(events);
 
+        List<String> uris = List.of(request.getRequestURI());
+        List<ViewStats> stats = statisticClient.stats(filter.getRangeStart(), filter.getRangeEnd(), uris, true);
+        int hits = stats.stream()
+                .filter(s -> s.getApp().equals(SERVICE_NAME))
+                .map(ViewStats::getHits).mapToInt(Integer::intValue).sum();
+
+        events.forEach(e -> e.setViews(hits));
+        if (filter.getSort() == SortTypes.VIEWS) {
+            events.sort(Comparator.comparingInt(Event::getViews));
+        }
+
+        eventRepository.saveAll(events);
         saveStatisticHit(request);
 
         return events.stream().map(eventMapper::toEventShortDto).collect(Collectors.toList());
@@ -61,7 +73,13 @@ public class EventService {
     public EventFullDto getEvent(Long id, HttpServletRequest request) throws NotFoundException {
         Event event = eventRepository.findByIdAndState(id, EventState.PUBLISHED).orElseThrow(() ->
                 new NotFoundException(String.format("Event with id %s not found", id)));
-        event.setViews(event.getViews() + 1);
+        List<String> uris = List.of(request.getRequestURI());
+        List<ViewStats> stats = statisticClient.stats(LocalDateTime.now(), LocalDateTime.now(), uris, true);
+        int hits = stats.stream()
+                .filter(s -> s.getApp().equals(SERVICE_NAME))
+                .map(ViewStats::getHits).mapToInt(Integer::intValue).sum();
+
+        event.setViews(hits);
         eventRepository.save(event);
         saveStatisticHit(request);
         return eventMapper.toEventFullDto(event);
@@ -204,7 +222,7 @@ public class EventService {
 
     private void saveStatisticHit(HttpServletRequest request) {
         EndpointHit endpointHit = new EndpointHit();
-        endpointHit.setApp("ewm-server");
+        endpointHit.setApp(SERVICE_NAME);
         endpointHit.setUri(request.getRemoteAddr());
         endpointHit.setIp(request.getRequestURI());
         endpointHit.setTimestamp(LocalDateTime.now());
