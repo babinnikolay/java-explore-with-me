@@ -46,13 +46,18 @@ public class EventService {
         }
         List<Event> events = eventRepository.findAllByFilter(filter, page);
 
-        List<String> uris = List.of(request.getRequestURI());
-        List<ViewStats> stats = statisticClient.stats(filter.getRangeStart(), filter.getRangeEnd(), uris, true);
-        int hits = stats.stream()
-                .filter(s -> s.getApp().equals(SERVICE_NAME))
-                .map(ViewStats::getHits).mapToInt(Integer::intValue).sum();
+        events.forEach(e -> {
+            List<ViewStats> stats = statisticClient.stats(filter.getRangeStart(),
+                    filter.getRangeEnd(),
+                    List.of(String.format("/events/%s", e.getId())),
+                    false);
+            if (stats.isEmpty()) {
+                e.setViews(0);
+            } else {
+                e.setViews(stats.get(0).getHits());
+            }
+        });
 
-        events.forEach(e -> e.setViews(hits));
         if (filter.getSort() == SortTypes.VIEWS) {
             events.sort(Comparator.comparingInt(Event::getViews));
         }
