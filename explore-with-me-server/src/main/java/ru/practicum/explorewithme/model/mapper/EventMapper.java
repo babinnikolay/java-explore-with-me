@@ -5,7 +5,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
 import ru.practicum.explorewithme.model.Event;
 import ru.practicum.explorewithme.model.EventRequestState;
-import ru.practicum.explorewithme.model.EventState;
+import ru.practicum.explorewithme.model.PublicationStatus;
 import ru.practicum.explorewithme.model.dto.EventFullDto;
 import ru.practicum.explorewithme.model.dto.EventShortDto;
 import ru.practicum.explorewithme.model.dto.Location;
@@ -26,7 +26,7 @@ public class EventMapper {
         event.setCreatedOn(LocalDateTime.now());
         event.setLocationLat(eventDto.getLocation().getLat());
         event.setLocationLon(eventDto.getLocation().getLon());
-        event.setState(EventState.PENDING);
+        event.setState(PublicationStatus.PENDING);
         return event;
     }
 

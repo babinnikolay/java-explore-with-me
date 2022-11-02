@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import ru.practicum.explorewithme.model.Event;
-import ru.practicum.explorewithme.model.EventState;
+import ru.practicum.explorewithme.model.PublicationStatus;
 import ru.practicum.explorewithme.model.dto.FilterEventAdminRequest;
 import ru.practicum.explorewithme.model.dto.FilterEventOpenRequest;
 
@@ -17,7 +17,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     Optional<Event> findByInitiatorIdAndId(Long userId, Long id);
 
-    Optional<Event> findByIdAndState(Long id, EventState state);
+    Optional<Event> findByIdAndState(Long id, PublicationStatus state);
 
     Boolean existsByCategoryId(Long id);
 

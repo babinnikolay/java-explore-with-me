@@ -1,6 +1,6 @@
 package ru.practicum.explorewithme.model;
 
-public enum EventState {
+public enum PublicationStatus {
     PENDING,
     PUBLISHED,
     CANCELED

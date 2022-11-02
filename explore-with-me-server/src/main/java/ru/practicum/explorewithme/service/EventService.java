@@ -8,8 +8,10 @@ import ru.practicum.explorewithme.exception.BadRequestException;
 import ru.practicum.explorewithme.exception.NotFoundException;
 import ru.practicum.explorewithme.model.*;
 import ru.practicum.explorewithme.model.dto.*;
+import ru.practicum.explorewithme.model.mapper.CommentMapper;
 import ru.practicum.explorewithme.model.mapper.EventMapper;
 import ru.practicum.explorewithme.repository.CategoryRepository;
+import ru.practicum.explorewithme.repository.CommentRepository;
 import ru.practicum.explorewithme.repository.EventRepository;
 import ru.practicum.explorewithme.repository.UserRepository;
 import ru.practicum.explorewithme.statisticclient.StatisticClient;
@@ -31,6 +33,8 @@ public class EventService {
     private final CategoryRepository categoryRepository;
     private final StatisticClient statisticClient;
     private final EventMapper eventMapper;
+    private final CommentRepository commentRepository;
+    private final CommentMapper commentMapper;
 
     public List<EventShortDto> getEvents(FilterEventOpenRequest filter, HttpServletRequest request) {
         String sortField = "id";
@@ -71,23 +75,24 @@ public class EventService {
     public List<EventFullDto> getEvents(FilterEventAdminRequest filter) {
         PageRequest page = PageRequest.of(filter.getFrom() / filter.getSize(), filter.getSize());
         List<Event> events = eventRepository.findAllByFilter(filter, page);
-
         return events.stream().map(eventMapper::toEventFullDto).collect(Collectors.toList());
     }
 
     public EventFullDto getEvent(Long id, HttpServletRequest request) throws NotFoundException {
-        Event event = eventRepository.findByIdAndState(id, EventState.PUBLISHED).orElseThrow(() ->
+        Event event = eventRepository.findByIdAndState(id, PublicationStatus.PUBLISHED).orElseThrow(() ->
                 new NotFoundException(String.format("Event with id %s not found", id)));
         List<String> uris = List.of(request.getRequestURI());
         List<ViewStats> stats = statisticClient.stats(LocalDateTime.now(), LocalDateTime.now(), uris, true);
         int hits = stats.stream()
                 .filter(s -> s.getApp().equals(SERVICE_NAME))
                 .map(ViewStats::getHits).mapToInt(Integer::intValue).sum();
-
         event.setViews(hits);
         eventRepository.save(event);
         saveStatisticHit(request);
-        return eventMapper.toEventFullDto(event);
+        List<Comment> comments = commentRepository.findAllByEventIdAndStatus(event.getId(), PublicationStatus.PUBLISHED);
+        EventFullDto eventFullDto = eventMapper.toEventFullDto(event);
+        eventFullDto.setComments(comments.stream().map(commentMapper::toCommentDto).collect(Collectors.toList()));
+        return eventFullDto;
     }
 
     public EventFullDto getEventByInitiator(Long userId, Long eventId) throws NotFoundException {
@@ -130,11 +135,11 @@ public class EventService {
         }
         Event event = eventRepository.findById(updateEventRequest.getEventId()).orElseThrow(() ->
                 new NotFoundException(String.format("Event with id %s not found", updateEventRequest.getEventId())));
-        if (event.getState() == EventState.PUBLISHED) {
+        if (event.getState() == PublicationStatus.PUBLISHED) {
             throw new BadRequestException(String.format("Event with id %d is published", updateEventRequest.getEventId()));
         }
-        if (event.getState() == EventState.CANCELED) {
-            event.setState(EventState.PENDING);
+        if (event.getState() == PublicationStatus.CANCELED) {
+            event.setState(PublicationStatus.PENDING);
         }
         if (updateEventRequest.getAnnotation() != null) {
             event.setAnnotation(updateEventRequest.getAnnotation());
@@ -193,10 +198,10 @@ public class EventService {
     public EventFullDto cancelEvent(Long userId, Long eventId) throws NotFoundException, BadRequestException {
         Event event = eventRepository.findByInitiatorIdAndId(userId, eventId).orElseThrow(() ->
                 new NotFoundException(String.format("Event %s with initiator %s not found", eventId, userId)));
-        if (event.getState() != EventState.PENDING) {
+        if (event.getState() != PublicationStatus.PENDING) {
             throw new BadRequestException(String.format("Event %s is not PENDING state", eventId));
         }
-        event.setState(EventState.CANCELED);
+        event.setState(PublicationStatus.CANCELED);
         Event savedEvent = eventRepository.save(event);
         return eventMapper.toEventFullDto(savedEvent);
     }
@@ -205,11 +210,11 @@ public class EventService {
         Event event = eventRepository.findById(eventId).orElseThrow(() ->
                 new NotFoundException(String.format("Event with id %s not found", eventId)));
         LocalDateTime now = LocalDateTime.now();
-        if (event.getEventDate().isBefore(now.plusHours(1)) || event.getState() != EventState.PENDING) {
+        if (event.getEventDate().isBefore(now.plusHours(1)) || event.getState() != PublicationStatus.PENDING) {
             throw new BadRequestException(String.format("Event %s is before or wrong state", eventId));
         }
         event.setPublishedOn(now);
-        event.setState(EventState.PUBLISHED);
+        event.setState(PublicationStatus.PUBLISHED);
         Event savedEvent = eventRepository.save(event);
         return eventMapper.toEventFullDto(savedEvent);
     }
@@ -217,10 +222,10 @@ public class EventService {
     public EventFullDto rejectEvent(Long eventId) throws NotFoundException, BadRequestException {
         Event event = eventRepository.findById(eventId).orElseThrow(() ->
                 new NotFoundException(String.format("Event with id %s not found", eventId)));
-        if (event.getState() == EventState.PUBLISHED) {
+        if (event.getState() == PublicationStatus.PUBLISHED) {
             throw new BadRequestException(String.format("Event %s is published", eventId));
         }
-        event.setState(EventState.CANCELED);
+        event.setState(PublicationStatus.CANCELED);
         Event savedEvent = eventRepository.save(event);
         return eventMapper.toEventFullDto(savedEvent);
     }

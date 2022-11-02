@@ -2,8 +2,7 @@ package ru.practicum.explorewithme.model;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.Filter;
-import org.hibernate.annotations.Filters;
+
 import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -13,10 +12,6 @@ import java.util.List;
 @Setter
 @Entity
 @Table(name = "event")
-@Filters({
-        @Filter(name = "id", condition = "id = :id")
-}
-)
 public class Event {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,7 +34,7 @@ public class Event {
     private LocalDateTime publishedOn;
     private Boolean requestModeration;
     @Enumerated(EnumType.STRING)
-    private EventState state;
+    private PublicationStatus state;
     private String title;
     private boolean available;
     @Transient

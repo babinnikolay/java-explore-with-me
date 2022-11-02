@@ -31,11 +31,13 @@ public class UserAdminController {
 
     @PostMapping
     public ResponseEntity<Object> createUser(@Valid @RequestBody UserDto userDto) {
+        log.info("Create user {}", userDto);
         return ResponseEntity.ok(userService.createUser(userDto));
     }
 
     @DeleteMapping("/{userId}")
     public ResponseEntity<Object> deleteUser(@NotNull @PathVariable Long userId) throws NotFoundException {
+        log.info("Delete user {}", userId);
         userService.deleteUser(userId);
         return ResponseEntity.ok().build();
     }

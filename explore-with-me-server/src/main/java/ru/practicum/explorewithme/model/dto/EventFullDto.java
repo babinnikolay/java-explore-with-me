@@ -5,10 +5,11 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.hibernate.validator.constraints.Length;
-import ru.practicum.explorewithme.model.EventState;
+import ru.practicum.explorewithme.model.PublicationStatus;
 
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -39,8 +40,9 @@ public class EventFullDto {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime publishedOn;
     private Boolean requestModeration;
-    private EventState state;
+    private PublicationStatus state;
     @NotNull
     private String title;
     private int views;
+    private List<CommentDto> comments;
 }

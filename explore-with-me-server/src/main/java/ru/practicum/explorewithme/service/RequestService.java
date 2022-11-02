@@ -46,7 +46,7 @@ public class RequestService {
             throw new BadRequestException(String.format("User userId=%s is eventId=%s initiator",
                     userId, eventId));
         }
-        if (event.getState() != EventState.PUBLISHED) {
+        if (event.getState() != PublicationStatus.PUBLISHED) {
             throw new BadRequestException(String.format("Event eventId=%s is not published", eventId));
         }
 

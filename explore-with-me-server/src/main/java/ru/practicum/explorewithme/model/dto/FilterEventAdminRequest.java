@@ -4,7 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import org.springframework.format.annotation.DateTimeFormat;
-import ru.practicum.explorewithme.model.EventState;
+import ru.practicum.explorewithme.model.PublicationStatus;
 
 import java.time.LocalDateTime;
 
@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @ToString
 public class FilterEventAdminRequest {
     private long[] users;
-    private EventState[] states;
+    private PublicationStatus[] states;
     private long[] categories;
     @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime rangeStart;
