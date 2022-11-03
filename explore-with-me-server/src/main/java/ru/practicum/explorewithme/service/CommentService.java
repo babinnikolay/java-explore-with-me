@@ -49,13 +49,13 @@ public class CommentService {
             throws NotFoundException, BadRequestException {
         User user = userRepository.findById(userId).orElseThrow(() ->
                 new NotFoundException(String.format("User %s not found", userId)));
-        if (!userId.equals(user.getId())) {
-            throw new BadRequestException(String.format("User %s not owner %s comment", userId, commentId));
-        }
         Event event = eventRepository.findById(commentDto.getEvent()).orElseThrow(() ->
                 new NotFoundException(String.format("Event %s not found", commentDto.getEvent())));
         Comment comment = commentRepository.findById(commentId).orElseThrow(() ->
                 new NotFoundException(String.format("Comment %s not found", commentId)));
+        if (!userId.equals(comment.getUser().getId())) {
+            throw new BadRequestException(String.format("User %s not owner %s comment", userId, commentId));
+        }
         comment.setUser(user);
         comment.setEvent(event);
         if (commentDto.getStatus() != PublicationStatus.PUBLISHED) {
@@ -77,12 +77,15 @@ public class CommentService {
         return comments.stream().map(commentMapper::toCommentDto).collect(Collectors.toList());
     }
 
-    public CommentDto getComment(Long userId, Long commentId) throws NotFoundException {
-        if (!userRepository.existsById(userId)) {
-            throw new NotFoundException(String.format("User %s not found", userId));
-        }
+    public CommentDto getComment(Long userId, Long commentId) throws NotFoundException, BadRequestException {
+        User user = userRepository.findById(userId).orElseThrow(() ->
+                new NotFoundException(String.format("User %s not found", userId))
+        );
         Comment comment = commentRepository.findById(commentId).orElseThrow(() ->
                 new NotFoundException(String.format("Comment %s not found", commentId)));
+        if (!comment.getUser().getId().equals(user.getId())) {
+            throw new BadRequestException(String.format("User %s not owner comment %s", userId, commentId));
+        }
         return commentMapper.toCommentDto(comment);
     }
 
@@ -100,7 +103,7 @@ public class CommentService {
     }
 
     public List<CommentDto> getAllAdminComments(FilterCommentAdminRequest filter) {
-        PageRequest page = PageRequest.of(filter.getFrom() / filter.getSize(), filter.getSize());
+        PageRequest page = PageRequest.of(filter.getFrom(), filter.getSize());
         if (filter.getText() != null) {
             filter.setText(("%" + filter.getText() + "%"));
         }

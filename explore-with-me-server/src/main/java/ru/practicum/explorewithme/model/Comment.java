@@ -23,7 +23,7 @@ public class Comment {
     @ManyToOne
     @JoinColumn(name = "event_id")
     private Event event;
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;
     @Enumerated(EnumType.STRING)

@@ -1,7 +1,6 @@
 package ru.practicum.explorewithme.model.dto;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import ru.practicum.explorewithme.model.PublicationStatus;
@@ -13,7 +12,6 @@ import java.time.LocalDateTime;
 
 @Getter
 @Setter
-@RequiredArgsConstructor
 @ToString
 public class CommentDto {
     private Long id;

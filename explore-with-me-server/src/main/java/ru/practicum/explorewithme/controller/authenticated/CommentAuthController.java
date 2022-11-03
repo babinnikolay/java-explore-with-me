@@ -45,7 +45,8 @@ public class CommentAuthController {
     }
 
     @GetMapping("/{commentId}")
-    public ResponseEntity<Object> getComment(@PathVariable Long userId, @PathVariable Long commentId) throws NotFoundException {
+    public ResponseEntity<Object> getComment(@PathVariable Long userId, @PathVariable Long commentId)
+            throws NotFoundException, BadRequestException {
         log.info("Get comment userId={}, commentId={}", userId, commentId);
         return ResponseEntity.ok(commentService.getComment(userId, commentId));
     }

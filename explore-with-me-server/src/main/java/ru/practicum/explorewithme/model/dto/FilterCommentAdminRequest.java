@@ -6,6 +6,7 @@ import lombok.ToString;
 import org.springframework.format.annotation.DateTimeFormat;
 import ru.practicum.explorewithme.model.PublicationStatus;
 
+import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,6 +25,6 @@ public class FilterCommentAdminRequest {
     private PublicationStatus status;
     @PositiveOrZero
     private Integer from = 0;
-    @PositiveOrZero
+    @Positive
     private Integer size = 10;
 }
